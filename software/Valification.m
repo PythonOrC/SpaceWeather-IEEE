@@ -1,0 +1,125 @@
+clear;
+DATA = 'dbn_nez';
+SEG = 2;
+PART = 1;
+MARGIN = 0;
+MLT_MARGIN = 1;
+MAGLAT_CHUNK_SIZE = 10;
+
+% import the raw unprocessed data
+if SEG == 1
+    raw = readtable("..\\data input\\HalloweenStorm-SuperMAG-Storm1.csv", "Delimiter",",", "DatetimeType","datetime");
+    raw_ACE = readtable("..\\data output\\ACE_0509_interp.csv");
+    TIME = 309;
+    DURATION = 240;
+    DATES = {51, 65, 72, 101, 114, 177};
+    location = 'OBS_Storm1';
+
+else
+    TIME = 1044;
+    DURATION = 420;
+    DATES = {10, 57, 92, 112, 135, 146, 217, 220};
+    raw = readtable("..\\data input\\HalloweenStorm-SuperMAG-Storm2.csv", "Delimiter",",", "DatetimeType","datetime");
+    raw_ACE = readtable("..\\data output\\ACE_1724_interp.csv");
+    location = 'OBS';
+end
+
+DATES = cell(1,DURATION);
+for i = 1: DURATION
+    DATES{i} = i;
+end
+
+% get the stations from the raw data
+[Stations,IA,IC] = unique(raw.IAGA, 'stable');
+mlt_all = raw.MLT;
+maglat_all = raw.MAGLAT;
+% get the latitude and longitude of each station
+lat = raw.GEOLAT(1:length(Stations), 1);
+long = raw.GEOLON(1:length(Stations), 1);
+for i = 1:length(long)
+    if long(i) > 180
+        long(i) = long(i)-360;
+    end
+end
+
+max_lat = 90;
+min_lat = -90;
+max_long = 180;
+min_long = -180;
+
+% extract the necessary data from the raw data
+clear data;
+data_dbn = {};
+data_dbe = {};
+data_dbh = {};
+for i = 1:length(Stations)
+    % raw datum refers to all the data from a single station
+    raw_datum = raw(raw.IAGA == string(Stations(i)), :);
+    % extract the needed datum from the raw datum
+    % datum = table2array(raw_datum(INTERVAL,{DATA}));
+    datum_dbn = table2array(raw_datum(:,{DATA}));
+    datum_dbe = table2array(raw_datum(:,{'dbe_nez'}));
+    %interpolate the Nan values
+    datum_dbe = fillmissing(datum_dbe, 'linear');
+    datum_dbn = fillmissing(datum_dbn, 'linear');
+    % add the datum to the data cell array
+    data_dbn = [data_dbn; datum_dbn];
+    data_dbe = [data_dbe; datum_dbe];
+
+    %calculate dbh
+    for j = 1:length(datum_dbn)
+        dbh = sqrt(datum_dbn(j)^2 + datum_dbe(j)^2);
+        % assign the dbh to the correct signage
+        if datum_dbn(j) < 0
+            dbh = -dbh;
+        end
+        datum_dbh(j) = dbh;
+    end
+    data_dbh = [data_dbh; datum_dbh'];
+end
+clear sim_dbh;
+clear OBS;
+sim_dbh = cell(length(Stations),1);
+OBS = table(Stations, data_dbh, lat, long, sim_dbh);
+%resulting sample structure of all:
+    % Stations       data_dbn        lat       long        data_dbe            data_dbh      
+    % ________    _______________    _____    _______   _______________     _______________
+    % {'BOU'}     {1440×1 double}    40.14    -105.24   {1440×1 double}     {1440×1 double}
+    % {'BSL'}     {1440×1 double}    30.35     -89.64   {1440×1 double}     {1440×1 double}
+    % {'FRD'}     {1440×1 double}     38.2     -77.37   {1440×1 double}     {1440×1 double}
+    % {'FRN'}     {1440×1 double}    37.09    -119.72   {1440×1 double}     {1440×1 double}
+    % {'NEW'}     {1440×1 double}    48.27    -117.12   {1440×1 double}     {1440×1 double}
+    %Use meshgrid to create a set of 2-D grid points in the longitude-latitude plane and then use griddata to interpolate the corresponding depth at those points:
+%[longi,lati] = meshgrid(min_long:1:max_long, min_lat:1:max_lat); % * 0.5 is the resolution, longitude then latitude
+acc = 0.5;
+[longi,lati] = meshgrid(min_long:acc:max_long, min_lat:acc:max_lat); % * 0.5 is the resolution, longitude then latitude
+dur = 75:79;
+if (PART == 2)
+    dur = 100:length(OBS.Stations);
+end
+
+for i = dur
+    OBS_c = OBS;
+    removed = OBS_c(i,:);
+    removed_lat_idx = round((removed.lat + 90)/acc)+1;
+    removed_long_idx = round((removed.long + 180)/acc)+1;
+    OBS_c(i,:)=[];
+    %combine all the values together
+    dat_dbh = [];
+    for j = 1:length(OBS_c.Stations)
+        dat_dbh = [dat_dbh OBS_c(strcmp(OBS_c.Stations, OBS_c.Stations(j)), : ).data_dbh{1}];
+    end
+
+    for idx = 1:length(DATES)
+        t = DATES{idx};
+        disp(["Generating" "t" t " Station" i "Storm" SEG]);
+        dat_dbh_c = dat_dbh(t,:); % _c = current data for all stations
+        v = variogram([OBS_c.long OBS_c.lat],dat_dbh_c');
+        [~,~,~,vstruct] = variogramfit(v.distance,v.val,[],[],[],'model','stable');
+        [OBSi,OBSVari] = krigingtest(vstruct,OBS_c.long',OBS_c.lat',dat_dbh_c,longi,lati);
+        removed_dbh = removed.data_dbh{1}(idx);
+        OBS.sim_dbh{i}(idx,:) = OBSi(removed_lat_idx, removed_long_idx);
+    end
+    save([location, '\OBS_', num2str(i), '.mat'], "OBS");
+    save([location, '\OBSi_', num2str(i), '.mat'], "OBS");
+end

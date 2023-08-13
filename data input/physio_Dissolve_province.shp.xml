@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<metadata xml:lang="en">
+    <Esri>
+        <MetaID>{377E4D36-236E-4572-B453-F7EA42B23081}</MetaID>
+        <CreaDate>20111006</CreaDate>
+        <CreaTime>19494500</CreaTime>
+        <SyncOnce>FALSE</SyncOnce>
+        <SyncDate>20111025</SyncDate>
+        <SyncTime>15183800</SyncTime>
+        <ModDate>20111025</ModDate>
+        <ModTime>15183800</ModTime>
+        <DataProperties>
+            <lineage>
+                <Process ToolSource="C:\ArcGIS\ArcToolbox\Toolboxes\Data Management Tools.tbx\Dissolve" Date="20111025" Time="135455">Dissolve physio J:\EMWOG\2009\2010_footprint\GIS\Physiographic_provinces\physio_Dissolve_province.shp PROVINCE # MULTI_PART DISSOLVE_LINES</Process>
+            </lineage>
+        </DataProperties>
+    </Esri>
+    <history>
+        <log>
+            <item>
+                <changeset>0</changeset>
+                <changetype>Data</changetype>
+                <user>GS\pbedrosian</user>
+                <date>10/6/2011 7:49:42 PM</date>
+                <comment></comment>
+            </item>
+            <item>
+                <changeset>1</changeset>
+                <changetype>Data</changetype>
+                <user>GS\pbedrosian</user>
+                <date>10/19/2011 12:16:29 PM</date>
+                <comment></comment>
+            </item>
+            <item>
+                <changeset>2</changeset>
+                <changetype>Data</changetype>
+                <user>GS\pbedrosian</user>
+                <date>10/25/2011 3:18:34 PM</date>
+                <comment></comment>
+            </item>
+        </log>
+    </history>
+    <idinfo>
+        <natvform Sync="TRUE">Shapefile</natvform>
+    </idinfo>
+    <distinfo>
+        <stdorder>
+            <digform>
+                <digtinfo>
+                    <transize Sync="TRUE">0.345</transize>
+                    <dssize Sync="TRUE">0.345</dssize>
+                </digtinfo>
+            </digform>
+        </stdorder>
+    </distinfo>
+</metadata>
