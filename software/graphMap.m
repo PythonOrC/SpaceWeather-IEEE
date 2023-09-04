@@ -156,6 +156,7 @@ clear min;
 clear max;
 max = 1.4514e+03;
 min = -2.9978e+03;
+
     %Use meshgrid to create a set of 2-D grid points in the longitude-latitude plane and then use griddata to interpolate the corresponding depth at those points:
 [longi,lati] = meshgrid(min_long:1:max_long, min_lat:1:max_lat); % * 0.5 is the resolution, longitude then latitude
 [longi,lati] = meshgrid(min_long:0.5:max_long, min_lat:0.5:max_lat); % * 0.5 is the resolution, longitude then latitude
@@ -636,7 +637,7 @@ for t = 78: length(OBS.data_dbn{1})
         'FitBoxToText','off',...
         'LineStyle','none');
     xlim([min_long max_long-1]); % * longitude range
-    ylim([min_lat max_lat-1]); % * latitude range
+    ylim([min_lat max_lat-1]); % * lsatitude range
     x0=10;
     y0=10;
     width=1800/3; %600
