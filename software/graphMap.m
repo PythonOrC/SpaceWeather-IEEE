@@ -1,30 +1,21 @@
-DATA = 'dbn_nez';
-SEG = 2;
-MARGIN = 0;
-MLT_MARGIN = 1;
+TIME = 309;
+DURATION = 240;
 MAGLAT_CHUNK_SIZE = 10;
+DATES = {51, 65, 72, 101, 114, 177};
+ACE_FILE = "ACE_0509_interp.csv";
+OBSERVATORY_FILE = "HalloweenStorm-SuperMAG-Storm1.csv";
 
-% import the raw unprocessed data
-if SEG == 1
-    raw = readtable("..\\data input\\HalloweenStorm-SuperMAG-Storm1.csv", "Delimiter",",", "DatetimeType","datetime");
-    raw_ACE = readtable("..\\data output\\ACE_0509_interp.csv");
-    TIME = 309;
-    DURATION = 240;
-    DATES = {51, 65, 72, 101, 114, 177};
-else
-    TIME = 1044;
-    DURATION = 420;
-    DATES = {10, 57, 92, 112, 135, 146, 217, 220};
-    raw = readtable("..\\data input\\HalloweenStorm-SuperMAG-Storm2.csv", "Delimiter",",", "DatetimeType","datetime");
-    raw_ACE = readtable("..\\data output\\ACE_1724_interp.csv");
+
+
+raw = readtable(OBSERVATORY_FILE, "Delimiter",",", "DatetimeType","datetime");
+raw_ACE = readtable(ACE_FILE);
+
+if exist('DATES','var')
+    DATES = cell(1,DURATION);
+    for i = 1: DURATION
+        DATES{i} = i;
+    end
 end
-
-DATES = cell(1,DURATION);
-for i = 1: DURATION
-    DATES{i} = i;
-end
-
-%INTERVAL = TIME:TIME+DURATION-1;
 
 % get the stations from the raw data
 [Stations,IA,IC] = unique(raw.IAGA, 'stable');
@@ -62,8 +53,7 @@ for i = 1:length(Stations)
     % raw datum refers to all the data from a single station
     raw_datum = raw(raw.IAGA == string(Stations(i)), :);
     % extract the needed datum from the raw datum
-    % datum = table2array(raw_datum(INTERVAL,{DATA}));
-    datum_dbn = table2array(raw_datum(:,{DATA}));
+    datum_dbn = table2array(raw_datum(:,{'dbn_nez'}));
     datum_dbe = table2array(raw_datum(:,{'dbe_nez'}));
     %interpolate the Nan values
     datum_dbe = fillmissing(datum_dbe, 'linear');
@@ -103,7 +93,7 @@ for i = 1:length(raw.MLT)/length(Stations)
         % decide which maglat chunk the station is in
         maglat_chunk = floor(maglat/MAGLAT_CHUNK_SIZE) + ceil(floor(180/MAGLAT_CHUNK_SIZE)/2)+1;
         % append the station to the correct list
-        if mlt <= 12+MLT_MARGIN && mlt >= 12-MLT_MARGIN
+        if mlt <= 13 && mlt >= 11
             loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).Geometry = 'Point';
             loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).Lat = lat(j);
             loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).Lon = long(j);
@@ -596,24 +586,16 @@ for t = 78: length(OBS.data_dbn{1})
 1.0 0.493 0.0
 ];
     colormap(map);
-    %colormap(parula(24));
-    %colormap(jet(16));
     set(gca,'ColorScale','linear')
     c.Label.String = "Variation (nT)";
     c.Label.FontSize = 12;
-    
-    if t+TIME-1 <= 1440
-        date_label =  '20031029 minute ';
-        minute_time = t+TIME-1;
-    else
-        date_label =  '20031030 minute ';
-        minute_time = t+TIME-1-1440;
-    end
+
+
+    minute_time = t+TIME-1;
     hour = num2str(fix(minute_time/60));
     if strlength(hour) == 1
         hour = ['0' hour];
     end
-
     minute = num2str(mod(minute_time, 60));
     if strlength(minute) == 1
         minute = ['0' minute];
@@ -643,6 +625,5 @@ for t = 78: length(OBS.data_dbn{1})
     width=1800/3; %600
     height=1200/3; %400
     set(gcf,'position',[x0,y0,width,height]);
-    saveas(gcf,['temp6\',date_label,num2str(minute_time),'.png'], 'png');
+    saveas(gcf,['figures\minute ',num2str(minute_time),'.png'], 'png');
 end
-                %quiver(LOC{i}(j).Lon,LOC{i}(j).Lat,dat_dbe_c(LOC{i}(j).StationID)/100,dat_dbn_c(LOC{i}(j).StationID)/100,0, 'color',c, "LineWidth", 2,"Marker","o");
