@@ -51,7 +51,6 @@ for i = 1:height(raw)
     end
 end
 
-disp("done");
 % remove the stations with 
 raw = raw(~ismember(raw.IAGA, bad_stations), :);
 
