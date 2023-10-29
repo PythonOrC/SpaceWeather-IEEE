@@ -67,13 +67,13 @@ for i = 1:length(Stations)
     data_dbh = [data_dbh; datum_dbh'];
 end
 clear LOC;
-% lat + long of stattions MLT != 12
+% lat + long of stattions MLT != 24
 LOC={};
 
 for i = 1:length(raw.MLT)/length(Stations)
-    % temp storage for MLT != 12
+    % temp storage for MLT != 24
     loc_n = [];
-    % temp storage for MLT == 12
+    % temp storage for MLT == 24
     loc_m = [];
     % indexs
     loc_n_i = zeros(ceil(180/MAGLAT_CHUNK_SIZE)+1,1) + 1;
@@ -86,7 +86,7 @@ for i = 1:length(raw.MLT)/length(Stations)
         % decide which maglat chunk the station is in
         maglat_chunk = floor(maglat/MAGLAT_CHUNK_SIZE) + ceil(floor(180/MAGLAT_CHUNK_SIZE)/2)+1;
         % append the station to the correct list
-        if mlt <= 13 && mlt >= 11
+        if mlt <= 1 || mlt >= 23
             loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).Geometry = 'Point';
             loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).Lat = lat(j);
             loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).Lon = long(j);
