@@ -2,13 +2,12 @@ TIME = 309;
 DURATION = 240;
 MAGLAT_CHUNK_SIZE = 10;
 DATES = {51, 65, 72, 101, 114, 177};
-ACE_FILE = "ACE_0509_interp.csv";
-OBSERVATORY_FILE = "HalloweenStorm-SuperMAG-Storm1.csv";
+OBSERVATORY_FILE = "20231029-00-07-supermag.csv";
 
 
+processed_file_path = preprocess(OBSERVATORY_FILE, TIME, DURATION);
 
-raw = readtable(OBSERVATORY_FILE, "Delimiter",",", "DatetimeType","datetime");
-raw_ACE = readtable(ACE_FILE);
+raw = readtable(processed_file_path, "Delimiter",",", "DatetimeType","datetime");
 
 if exist('DATES','var')
     DATES = cell(1,DURATION);
@@ -30,12 +29,6 @@ for i = 1:length(long)
     end
 end
 
-
-
-By = raw_ACE.By;
-Bz = raw_ACE.Bz;
-
-
 clear max;
 clear min;
 max_lat = 90;
@@ -55,9 +48,9 @@ for i = 1:length(Stations)
     % extract the needed datum from the raw datum
     datum_dbn = table2array(raw_datum(:,{'dbn_nez'}));
     datum_dbe = table2array(raw_datum(:,{'dbe_nez'}));
-    %interpolate the Nan values
-    datum_dbe = fillmissing(datum_dbe, 'linear');
-    datum_dbn = fillmissing(datum_dbn, 'linear');
+%     %interpolate the Nan values
+%     datum_dbe = fillmissing(datum_dbe, 'linear');
+%     datum_dbn = fillmissing(datum_dbn, 'linear');
     % add the datum to the data cell array
     data_dbn = [data_dbn; datum_dbn];
     data_dbe = [data_dbe; datum_dbe];
@@ -600,15 +593,8 @@ for t = 78: length(OBS.data_dbn{1})
     if strlength(minute) == 1
         minute = ['0' minute];
     end
-    if t-16 < 1 
-        Bz_now = 0; 
-        By_now = 0; 
-    else 
-        Bz_now = Bz(t-16); 
-        By_now = By(t-16);
-    end
 
-    str_title=['UTC ' hour ':' minute ' IMF By: ' num2str(round(By_now,1)) ' Bz: ' num2str(round(Bz_now,1)) ];
+    str_title=['UTC ' hour ':' minute];
 
     title(str_title);
     annotation('textbox',...
