@@ -163,7 +163,7 @@ for t = 78: length(OBS.data_dbn{1})
     v = variogram([OBS.long OBS.lat],dat_dbh_c');
     [~,~,~,vstruct] = variogramfit(v.distance,v.val,[],[],[],'model','stable');
     close;
-    [OBSi,OBSVari] = krigingtest(vstruct,OBS.long',OBS.lat',dat_dbh_c,longi,lati);
+    [OBSi,OBSVari] = kriging(vstruct,OBS.long',OBS.lat',dat_dbh_c,longi,lati);
     
     
   figure('Color','w', 'Position',[0 0 1280 720]);

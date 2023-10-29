@@ -19,7 +19,7 @@ function plotData(start, finish, labels)
     plt = stackedplot(tbl, "Xvariable","Time", "Title", "SML on October 29, 2003","DisplayLabels",["SML (nT)"]);
     ax = findobj(plt.NodeChildren, 'Type','Axes');
     plt.XLimits = [start finish];
-    plt.XLabel = "Time (hour)";
+    plt.XLabel = "UT Time (hour)";
     set(ax,'XTick',labels{1},'XTickLabel',labels{2})
    % plt.LineProperties(1).Color = [0 0.4470 0.7410];
     %plt.LineProperties(2).Color = [0.8500 0.3250 0.0980];
