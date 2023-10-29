@@ -17,7 +17,7 @@ stations_length = length(unique(raw.IAGA));
 %extract data from table within the time range
 % take the start_timeth row and the next duration rows
 
-raw = raw(start_time*stations_length:(start_time+duration)*stations_length-1, :);
+raw = raw(start_time*stations_length+1:(start_time+duration)*stations_length, :);
 
 %remove the stations with 20 or more consecutive missing values in the dbn and dbe columns
 % create a 3xn table that correlates missing dbn values and dbe to the station name
@@ -65,5 +65,6 @@ raw.dbe_nez = fillmissing(raw.dbe_nez, 'linear');
 
 file = split(string(file_name), ".");
 % save the data to a new csv file including the start time and duration
-writetable(raw, "preprocessed_" + file[1] + "(start" + start_time + ", duration" + duration + ")."+file[2], "Delimiter",",", "DatetimeType","datetime");
+new_file_name = "preprocessed " + file(1) + " (start " + start_time + ", duration " + duration + ")."+file(2);
+writetable(raw, new_file_name, "Delimiter",",");
 % end
