@@ -3,15 +3,16 @@
 % remove the stations with too many missing values
 % interpolates the missing values
 % and saves the data to a new csv file
-% 
+%
+% example:
 % preprocess("20231029-00-07-supermag.csv",309,240)
-% 
+%
 function new_file_name = preprocess(file_name, start_time, duration)
-
 raw = readtable(file_name, "Delimiter",",", "DatetimeType","datetime");
 stations_length = length(unique(raw.IAGA));
+
 %extract data from table within the time range
-% take the start_timeth row and the next duration rows
+% take `duration` rows from row index `start_time`
 
 raw = raw(start_time*stations_length+1:(start_time+duration+1)*stations_length, :);
 
@@ -20,6 +21,7 @@ raw = raw(start_time*stations_length+1:(start_time+duration+1)*stations_length, 
 misses = table('Size',[0 3],'VariableTypes', ["string","double", "double"],'VariableNames', ["IAGA", "dbn", "dbe"]);
 bad_stations = [];
 for i = 1:height(raw)
+    % check for continuous missing dbn values
     if isnan(raw.dbn_nez(i))
         if ismember(raw.IAGA{i}, misses.IAGA)
             misses.dbn(misses.IAGA == raw.IAGA{i}) = misses.dbn(misses.IAGA == raw.IAGA{i}) + 1;
@@ -34,7 +36,7 @@ for i = 1:height(raw)
             misses.dbn(misses.IAGA == raw.IAGA{i}) = 0;
         end
     end
-
+    % check for continuous missing dbe values
     if isnan(raw.dbe_nez(i))
         if ismember(raw.IAGA{i}, misses.IAGA)
             misses.dbe(misses.IAGA == raw.IAGA{i}) = misses.dbe(misses.IAGA == raw.IAGA{i}) + 1;
@@ -51,15 +53,15 @@ for i = 1:height(raw)
     end
 end
 
-% remove the stations with 
+% remove the stations with to many missing values
 raw = raw(~ismember(raw.IAGA, bad_stations), :);
 
-% interpolate the missing values
+% interpolate the missing values for the rest of the stations
 raw.dbn_nez = fillmissing(raw.dbn_nez, 'linear');
 raw.dbe_nez = fillmissing(raw.dbe_nez, 'linear');
 
 file = split(string(file_name), ".");
 % save the data to a new csv file including the start time and duration
-new_file_name = "preprocessed " + file(1) + " (start " + start_time + ", duration " + duration + ")."+file(2);
+new_file_name = file(1) + " preprocessed " + " (start " + start_time + ", duration " + duration + ")."+file(2);
 writetable(raw, new_file_name, "Delimiter",",");
 end
