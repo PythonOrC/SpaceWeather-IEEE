@@ -1,7 +1,8 @@
+clc
 TIME = 309;
 DURATION = 240;
 MAGLAT_CHUNK_SIZE = 10;
-DATES = {51, 65, 72, 101, 114, 177};
+% DATES = {371,376,409,483};
 OBSERVATORY_FILE = "20231029-00-07-supermag.csv";
 
 
@@ -10,8 +11,12 @@ processed_file_path = preprocess(OBSERVATORY_FILE, TIME, DURATION);
 raw = readtable(processed_file_path, "Delimiter",",", "DatetimeType","datetime");
 
 if exist('DATES','var')
+    for i = 1: length(DATES)
+        DATES{i} = DATES{i}+1-TIME;
+    end
+else
     DATES = cell(1,DURATION);
-    for i = 1: DURATION
+    for i = 1:DURATION
         DATES{i} = i;
     end
 end
@@ -140,16 +145,17 @@ clear max;
 max = 1.4514e+03;
 min = -2.9978e+03;
 
+
     %Use meshgrid to create a set of 2-D grid points in the longitude-latitude plane and then use griddata to interpolate the corresponding depth at those points:
 [longi,lati] = meshgrid(min_long:1:max_long, min_lat:1:max_lat); % * 0.5 is the resolution, longitude then latitude
 [longi,lati] = meshgrid(min_long:0.5:max_long, min_lat:0.5:max_lat); % * 0.5 is the resolution, longitude then latitude
 % graph the data
 s = shaperead('landareas.shp');
-for t = 78: length(OBS.data_dbn{1})
+%for t = 78: length(OBS.data_dbn{1})
 
-%for idx = 1:length(DATES)
-    %t = DATES{idx};
-    disp(["Generating" t "..."]);
+for idx = 1:length(DATES)
+    t = DATES{idx};
+    disp(["Generating" t "max:" max "min:" min]);
     dat_dbh_c = dat_dbh(t,:); % _c = current data for all stations
     dat_dbe_c = dat_dbe(t,:);
     dat_dbn_c = dat_dbn(t,:);
