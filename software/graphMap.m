@@ -1,8 +1,7 @@
 clear
 %================MUST CONFIGURE================
 TIME = 309;
-DURATION = 240;                                                 % duration of the generation in minutes starting from TIME (240 = 4 hours starting from TIME)
-DATES = {371,376,409,483};                                      % dates to generate (empty or undefined = all dates)
+TIME_RANGE = ["2003-10-29T05:09:00" "2003-10-29T09:09:00"];     % time range of the generation in ISO 8601 format (YYYY-MM-DDThh:mm:ss)
 OBSERVATORY_FILE = "data/sample/20231029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
 CBAR_COVERAGE = [0.5 99.5];                                     % colorbar coverage in percentile, [0.5 99.5] means 0.5% to 99.5% percentile, range = [0,100]
 %==============================================
@@ -11,7 +10,7 @@ clc
 %================OPTIONAL CONGURATION================
 lat_range = [-90 90];               % latitude range of the display area in degrees
 long_range = [-180 180];            % longitude range of the display area in degrees
-fig_position = [10 10 600 400]      % position of the figure window in pixels [left bottom width height]
+fig_position = [10 10 600 400];     % position of the figure window in pixels [left bottom width height]
 chunk_size = 10;                    % size of the color chunks of magnetic latitude (10 = alternate color every 10 degrees)
 preprocess_threshold = 0.1;         % remove stations with continuous missing data of length greater than this value (0.1 = 10%)
 load("colormap.mat");               % load the colormap
@@ -28,25 +27,14 @@ dat_dbh = [];
 LOC={};
 
 % preprocess the downloaded csv to remove stations that are too unreliable
-processed_file_path = preprocess(OBSERVATORY_FILE, TIME, DURATION, preprocess_threshold);
+processed_file_path = preprocess(OBSERVATORY_FILE, TIME_RANGE, preprocess_threshold);
 raw = readtable(processed_file_path, "Delimiter",",", "DatetimeType","datetime");
-
-% generate the dates to generate
-if exist('DATES','var') && ~isempty(DATES) % if DATES is defined
-    for i = 1: length(DATES)
-        DATES{i} = DATES{i}+1-TIME;
-    end
-else % if DATES is not defined
-    DATES = cell(1,DURATION);
-    for i = 1:DURATION
-        DATES{i} = i;
-    end
-end
 
 % get the stations from the raw data
 [Stations,IA,IC] = unique(raw.IAGA, 'stable');
 mlt_all = raw.MLT;
 maglat_all = raw.MAGLAT;
+datetime_all = unique(raw.Date_UTC, 'stable');
 
 % get the latitude and longitude of each station
 lat = raw.GEOLAT(1:length(Stations), 1);
@@ -125,15 +113,15 @@ end
 % {0×0 double}    {1×4 double}    {0×0 double}    ...    {1×5 double}
 
 % combine the data and the Stations together into a table
-OBS = table(Stations, data_dbn, lat, long, data_dbe, data_dbh);
+OBS = table(Stations, lat, long, data_dbh);
 %resulting sample structure of all:
-    % Stations       data_dbn        lat       long        data_dbe            data_dbh      
-    % ________    _______________    _____    _______   _______________     _______________
-    % {'BOU'}     {1440×1 double}    40.14    -105.24   {1440×1 double}     {1440×1 double}
-    % {'BSL'}     {1440×1 double}    30.35     -89.64   {1440×1 double}     {1440×1 double}
-    % {'FRD'}     {1440×1 double}     38.2     -77.37   {1440×1 double}     {1440×1 double}
-    % {'FRN'}     {1440×1 double}    37.09    -119.72   {1440×1 double}     {1440×1 double}
-    % {'NEW'}     {1440×1 double}    48.27    -117.12   {1440×1 double}     {1440×1 double}
+    % Stations       data_dbn        lat       long        data_dbh      
+    % ________    _______________    _____    _______   _______________
+    % {'BOU'}     {1440×1 double}    40.14    -105.24   {1440×1 double}
+    % {'BSL'}     {1440×1 double}    30.35     -89.64   {1440×1 double}
+    % {'FRD'}     {1440×1 double}     38.2     -77.37   {1440×1 double}
+    % {'FRN'}     {1440×1 double}    37.09    -119.72   {1440×1 double}
+    % {'NEW'}     {1440×1 double}    48.27    -117.12   {1440×1 double}
 
 %combine all dbh values into a 2d array
 for i = 1:length(OBS.Stations)
@@ -149,10 +137,11 @@ max_dbh = prctile(dat_dbh, CBAR_COVERAGE(2), 'all');
 [longi,lati] = meshgrid(long_range(1):0.5:long_range(2), lat_range(1):0.5:lat_range(2)); % * 0.5 is the resolution, longitude then latitude
 
 % graph the data
-for idx = 1:length(DATES)
-    t = DATES{idx};
-    fprintf("Generating %d max: %d min: %d\n", t, max_dbh, min_dbh);
-    dat_dbh_c = dat_dbh(t,:); % _c = current data for all stations
+for idx = 1:length(datetime_all)
+    datetime_c = datetime_all(idx);
+    fprintf("Generating %s max: %d min: %d\n", string(datetime_c, 'yyyy-MM-dd HH:mm:ss'), max_dbh, min_dbh);
+    dat_dbh_c = dat_dbh(idx,:); % _c = current data for all stations
+
     v = variogram([OBS.long OBS.lat],dat_dbh_c');
     [~,~,~,vstruct] = variogramfit(v.distance,v.val,[],[],[],'model','stable');
     close;
@@ -166,21 +155,21 @@ for idx = 1:length(DATES)
         
     % draw the stations diffferently depending on MLT
     % draw the stations with MLT == 24
-    for i = 1:length(LOC{2,t})
-        if ~isempty(LOC{2,t}{i})
+    for i = 1:length(LOC{2,idx})
+        if ~isempty(LOC{2,idx}{i})
             if i/2 ~= floor(i/2)
                 station_color = [0 0 0];
             else
                 station_color = [1 1 1];
             end
-            geoshow(LOC{2,t}{i},'Marker','o',...
+            geoshow(LOC{2,idx}{i},'Marker','o',...
             'MarkerFaceColor',station_color,'MarkerEdgeColor','k', 'MarkerSize', 5);
         end
     end
     % draw the stations with MLT != 24
-    for i = 1:length(LOC{1,t})
-        if ~isempty(LOC{1,t}{i})
-            geoshow(LOC{1,t}{i},'Marker','d',...
+    for i = 1:length(LOC{1,idx})
+        if ~isempty(LOC{1,idx}{i})
+            geoshow(LOC{1,idx}{i},'Marker','d',...
             'MarkerFaceColor',[1 0 1],'MarkerEdgeColor','k', 'MarkerSize', 5);
         end
     end
@@ -197,19 +186,10 @@ for idx = 1:length(DATES)
     cbar.Label.String = "Variation (nT)";
     cbar.Label.FontSize = 12;
 
-    % draw the title
-    minute_time = t+TIME-1;
-    hour = num2str(fix(minute_time/60));
-    if strlength(hour) == 1
-        hour = ['0' hour];
-    end
-    minute = num2str(mod(minute_time, 60));
-    if strlength(minute) == 1
-        minute = ['0' minute];
-    end
 
-    str_title=['UTC ' hour ':' minute];
-    title(str_title);
+    % draw the title
+    title(string(datetime_c, 'yyyy-MM-dd HH:mm:ss'));
+    % draw the axes
     annotation('textbox',...
         [0.82 0.066 0.077 0.052],... % * position of the text box
         'String',{'nT'},...
@@ -217,12 +197,11 @@ for idx = 1:length(DATES)
         'FontName','Arial',...
         'FitBoxToText','off',...
         'LineStyle','none');
-
-    % draw the axes
+    % set the axes
     xlim([long_range(1) long_range(2)-1]); % * longitude range
-    ylim([lat_range(1) lat_range(2)-1]); % * lsatitude range
+    ylim([lat_range(1) lat_range(2)-1]); % * latitude range
     % set the figure position
     set(gcf,'position',fig_position);
     % save the figure
-    saveas(gcf,['figures\minute ',num2str(minute_time),'.png'], 'png');
+    saveas(gcf,'figures\'+string(datetime_c, 'yyyy-MM-dd HH-mm-ss')+'.png');
 end
