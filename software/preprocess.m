@@ -5,9 +5,9 @@
 % and saves the data to a new csv file
 %
 % example:
-% preprocess("20231029-00-07-supermag.csv",309,240)
+% preprocess("20231029-00-07-supermag.csv",309,240, 0.1)
 %
-function new_file_name = preprocess(file_name, start_time, duration)
+function new_file_name = preprocess(file_name, start_time, duration, threshold)
 raw = readtable(file_name, "Delimiter",",", "DatetimeType","datetime");
 stations_length = length(unique(raw.IAGA));
 
@@ -16,7 +16,7 @@ stations_length = length(unique(raw.IAGA));
 
 raw = raw(start_time*stations_length+1:(start_time+duration+1)*stations_length, :);
 
-%remove the stations with 20 or more consecutive missing values in the dbn and dbe columns
+%remove the stations with `threshold` percent or more consecutive missing values in the dbn and dbe columns
 % create a 3xn table that correlates missing dbn values and dbe to the station name
 misses = table('Size',[0 3],'VariableTypes', ["string","double", "double"],'VariableNames', ["IAGA", "dbn", "dbe"]);
 bad_stations = [];
@@ -25,7 +25,7 @@ for i = 1:height(raw)
     if isnan(raw.dbn_nez(i))
         if ismember(raw.IAGA{i}, misses.IAGA)
             misses.dbn(misses.IAGA == raw.IAGA{i}) = misses.dbn(misses.IAGA == raw.IAGA{i}) + 1;
-            if misses.dbe(misses.IAGA == raw.IAGA{i}) >= 20 && ~any(strcmp(bad_stations,raw.IAGA{i}))
+            if misses.dbe(misses.IAGA == raw.IAGA{i}) >= threshold*duration && ~any(strcmp(bad_stations,raw.IAGA{i}))
                 bad_stations = [bad_stations; raw.IAGA(i)];
             end
         else
@@ -40,7 +40,7 @@ for i = 1:height(raw)
     if isnan(raw.dbe_nez(i))
         if ismember(raw.IAGA{i}, misses.IAGA)
             misses.dbe(misses.IAGA == raw.IAGA{i}) = misses.dbe(misses.IAGA == raw.IAGA{i}) + 1;
-            if misses.dbe(misses.IAGA == raw.IAGA{i}) >= 20 && ~any(strcmp(bad_stations, raw.IAGA{i}))
+            if misses.dbe(misses.IAGA == raw.IAGA{i}) >= threshold*duration && ~any(strcmp(bad_stations, raw.IAGA{i}))
                 bad_stations = [bad_stations; raw.IAGA(i)];
             end
         else

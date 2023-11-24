@@ -13,6 +13,7 @@ lat_range = [-90 90];               % latitude range of the display area in degr
 long_range = [-180 180];            % longitude range of the display area in degrees
 fig_position = [10 10 600 400]      % position of the figure window in pixels [left bottom width height]
 chunk_size = 10;                    % size of the color chunks of magnetic latitude (10 = alternate color every 10 degrees)
+preprocess_threshold = 0.1;         % remove stations with continuous missing data of length greater than this value (0.1 = 10%)
 load("colormap.mat");               % load the colormap
 s = shaperead('landareas.shp');     % load the shape file
 %====================================================
@@ -27,7 +28,7 @@ dat_dbh = [];
 LOC={};
 
 % preprocess the downloaded csv to remove stations that are too unreliable
-processed_file_path = preprocess(OBSERVATORY_FILE, TIME, DURATION);
+processed_file_path = preprocess(OBSERVATORY_FILE, TIME, DURATION, preprocess_threshold);
 raw = readtable(processed_file_path, "Delimiter",",", "DatetimeType","datetime");
 
 % generate the dates to generate

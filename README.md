@@ -17,9 +17,11 @@ main file is `graphMap.m`
 
 To download the `OBSERVATORY_FILE` data, use the following procedure:
 
-1. Go to [https://supermag.jhuapl.edu/mag/?tab=customdownload](https://supermag.jhuapl.edu/mag/?tab=customdownload)
-2. Select the time range on the right side of the page
-3. select the stations you want to download
-4. keep all other options as default
-5. scroll down and click `Download Megnetometer Data`
-6. place downloaded csv file in the same directory as `graphMap.m`
+1. Register for an account at [https://supermag.jhuapl.edu/mag/?tab=register](https://supermag.jhuapl.edu/mag/?tab=register)
+2. Go to [https://supermag.jhuapl.edu/mag/?tab=customdownload](https://supermag.jhuapl.edu/mag/?tab=customdownload)
+3. Select the time range on the right side of the page
+4. select the stations to download
+5. Scroll down and choose CSV as the output format
+6. keep all other options as default
+7. Enter Security Code
+8. Click `Download Megnetometer Data`
