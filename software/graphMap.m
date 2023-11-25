@@ -1,36 +1,32 @@
 clear
-%================MUST CONFIGURE================
-TIME = 309;
-TIME_RANGE = ["2003-10-29T05:09:00" "2003-10-29T09:09:00"];     % time range of the generation in ISO 8601 format (YYYY-MM-DDThh:mm:ss)
+%===================MUST CONFIGURE===================
 OBSERVATORY_FILE = "data/sample/20231029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
-CBAR_COVERAGE = [0.5 99.5];                                     % colorbar coverage in percentile, [0.5 99.5] means 0.5% to 99.5% percentile, range = [0,100]
-%==============================================
-clc
-
+%====================================================
 %================OPTIONAL CONGURATION================
-lat_range = [-90 90];               % latitude range of the display area in degrees
-long_range = [-180 180];            % longitude range of the display area in degrees
-fig_position = [10 10 600 400];     % position of the figure window in pixels [left bottom width height]
-chunk_size = 10;                    % size of the color chunks of magnetic latitude (10 = alternate color every 10 degrees)
-preprocess_threshold = 0.1;         % remove stations with continuous missing data of length greater than this value (0.1 = 10%)
-load("colormap.mat");               % load the colormap
-s = shaperead('landareas.shp');     % load the shape file
+time_range = [];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:09:00") [start end]
+                                % leave empty or undefined to use the time range of the downloaded file
+lat_range = [-90 90];           % latitude range of the display area in degrees
+long_range = [-180 180];        % longitude range of the display area in degrees
+fig_position = [10 10 600 400]; % position of the figure window in pixels [left bottom width height]
+chunk_size = 10;                % size of the color chunks of magnetic latitude (10 = alternate color every 10 degrees)
+preprocess_threshold = 0.1;     % remove stations with continuous missing data of length greater than this value (0.1 = 10%)
+cbar_coverage = [0.5 99.5];     % colorbar coverage in percentile, [0.5 99.5] means 0.5% to 99.5% percentile, range = [0,100]
+load("colormap.mat");           % load the colormap
+s = shaperead('landareas.shp'); % load the shape file
 %====================================================
 
-%declare variables
-data_dbn = {};
-data_dbe = {};
-data_dbh = {};
-dat_dbn = [];
-dat_dbe = [];
-dat_dbh = [];
-LOC={};
+
+% declare time_range if not defined already
+if ~exist('time_range', 'var') || isempty(time_range) 
+    time_range = [];
+end
 
 % preprocess the downloaded csv to remove stations that are too unreliable
-processed_file_path = preprocess(OBSERVATORY_FILE, TIME_RANGE, preprocess_threshold);
+clc
+processed_file_path = preprocess(OBSERVATORY_FILE, time_range, preprocess_threshold);
 raw = readtable(processed_file_path, "Delimiter",",", "DatetimeType","datetime");
 
-% get the stations from the raw data
+% get relevant data from the raw dataset
 [Stations,IA,IC] = unique(raw.IAGA, 'stable');
 mlt_all = raw.MLT;
 maglat_all = raw.MAGLAT;
@@ -45,115 +41,58 @@ for i = 1:length(long)
     end
 end
 
-% extract the necessary data from the raw data
-for i = 1:length(Stations)
-    % raw datum refers to all the data from a single station
-    raw_datum = raw(raw.IAGA == string(Stations(i)), :);
-    % extract the needed datum from the raw datum
-    datum_dbn = table2array(raw_datum(:,{'dbn_nez'}));
-    datum_dbe = table2array(raw_datum(:,{'dbe_nez'}));
-    % add the datum to the data cell array
-    data_dbn = [data_dbn; datum_dbn];
-    data_dbe = [data_dbe; datum_dbe];
-
-    %calculate dbh
-    for j = 1:length(datum_dbn)
-        dbh = sqrt(datum_dbn(j)^2 + datum_dbe(j)^2);
-        % assign the dbh to the correct signage
-        if datum_dbn(j) < 0
-            dbh = -dbh;
-        end
-        datum_dbh(j) = dbh;
-    end
-    data_dbh = [data_dbh; datum_dbh'];
-end
+% calculate dbh for each station
+data_dbh = getdbh(raw, Stations);
 
 % generate the location struct for each time step
-for i = 1:length(raw.MLT)/length(Stations)
-    % temp storage for MLT != 24
-    loc_n = [];
-    % temp storage for MLT == 24
-    loc_m = [];
-    % indexes
-    loc_n_i = zeros(ceil(180/chunk_size)+1,1) + 1;
-    loc_m_i = zeros(ceil(180/chunk_size)+1,1) + 1;
-    % loop through each station individually
-    % j = index of station
-    for j = 1:length(Stations)
-        mlt = mlt_all((i-1)*length(Stations)+j);
-        maglat = maglat_all((i-1)*length(Stations)+j);
-        % decide which maglat chunk the station is in
-        maglat_chunk = floor(maglat/chunk_size) + ceil(floor(180/chunk_size)/2)+1;
-        % append the station to the correct list
-        if mlt <= 1 || mlt >= 23
-            loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).Geometry = 'Point';
-            loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).Lat = lat(j);
-            loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).Lon = long(j);
-            loc_m{maglat_chunk}(loc_m_i(maglat_chunk)).StationID = j;
-            loc_m_i(maglat_chunk) = loc_m_i(maglat_chunk) + 1;
-        else
-            loc_n{maglat_chunk}(loc_n_i(maglat_chunk)).Geometry = 'Point';
-            loc_n{maglat_chunk}(loc_n_i(maglat_chunk)).Lat = lat(j);
-            loc_n{maglat_chunk}(loc_n_i(maglat_chunk)).Lon = long(j);
-            loc_n{maglat_chunk}(loc_n_i(maglat_chunk)).StationID = j;
-            loc_n_i(maglat_chunk) = loc_n_i(maglat_chunk) + 1;
-        end
-    end
-    % append the location struct to the LOC cell array
-    LOC{1,i} = loc_m;
-    LOC{2,i} = loc_n;
-end
-% struct of LOC
-%                  t=1            t=2            t=3            t=4            t=5            t=6            t=7        t=n 
-% MLT == 24 -> {1×16 cell}    {1×16 cell}    {1×16 cell}    {1×16 cell}    {1×16 cell}    {1×16 cell}    {1×16 cell}    ...
-% MLT != 24 -> {1×18 cell}    {1×18 cell}    {1×18 cell}    {1×18 cell}    {1×18 cell}    {1×18 cell}    {1×18 cell}    ...
-
-% struct of one of the cell
-%    -90           -89 ~ -80       -79 ~ -60               80 ~ 90
-% {0×0 double}    {1×4 double}    {0×0 double}    ...    {1×5 double}
+LOC = getloc(Stations, chunk_size, mlt_all, maglat_all, lat, long);
 
 % combine the data and the Stations together into a table
 OBS = table(Stations, lat, long, data_dbh);
 %resulting sample structure of all:
-    % Stations       data_dbn        lat       long        data_dbh      
-    % ________    _______________    _____    _______   _______________
-    % {'BOU'}     {1440×1 double}    40.14    -105.24   {1440×1 double}
-    % {'BSL'}     {1440×1 double}    30.35     -89.64   {1440×1 double}
-    % {'FRD'}     {1440×1 double}     38.2     -77.37   {1440×1 double}
-    % {'FRN'}     {1440×1 double}    37.09    -119.72   {1440×1 double}
-    % {'NEW'}     {1440×1 double}    48.27    -117.12   {1440×1 double}
+    % Stations    lat       long        data_dbh      
+    % ________    _____    _______   _______________
+    % {'BOU'}     40.14    -105.24   {1440×1 double}
+    % {'BSL'}     30.35     -89.64   {1440×1 double}
+    % {'FRD'}      38.2     -77.37   {1440×1 double}
+    % {'FRN'}     37.09    -119.72   {1440×1 double}
+    % {'NEW'}     48.27    -117.12   {1440×1 double}
 
 %combine all dbh values into a 2d array
+dat_dbh = [];
 for i = 1:length(OBS.Stations)
     dat_dbh = [dat_dbh OBS(strcmp(OBS.Stations, OBS.Stations(i)), : ).data_dbh{1}];
 end
 
 %get the upper and lower bounds of the data
-min_dbh = prctile(dat_dbh, CBAR_COVERAGE(1), 'all');
-max_dbh = prctile(dat_dbh, CBAR_COVERAGE(2), 'all');
+min_dbh = prctile(dat_dbh, cbar_coverage(1), 'all');
+max_dbh = prctile(dat_dbh, cbar_coverage(2), 'all');
 
 %Use meshgrid to create a set of 2-D grid points in the longitude-latitude plane and then use griddata to interpolate the corresponding depth at those points:
-[longi,lati] = meshgrid(long_range(1):1:long_range(2), lat_range(1):1:lat_range(2)); % * 0.5 is the resolution, longitude then latitude
 [longi,lati] = meshgrid(long_range(1):0.5:long_range(2), lat_range(1):0.5:lat_range(2)); % * 0.5 is the resolution, longitude then latitude
+
+% clear unnecessary variables
+clearvars -except OBS LOC dat_dbh datetime_all longi lati fig_position s map min_dbh max_dbh
 
 % graph the data
 for idx = 1:length(datetime_all)
-    datetime_c = datetime_all(idx);
-    fprintf("Generating %s max: %d min: %d\n", string(datetime_c, 'yyyy-MM-dd HH:mm:ss'), max_dbh, min_dbh);
-    dat_dbh_c = dat_dbh(idx,:); % _c = current data for all stations
+    datetime_c = datetime_all(idx);% _c = current data for all stations
+    fprintf("Generating %s max: %d min: %d\n", string(datetime_c, 'yyyy-MM-dd HH:mm:ss'), max_dbh, min_dbh); % status update
+    dat_dbh_c = dat_dbh(idx,:); 
 
+    % kriging interpolation
     v = variogram([OBS.long OBS.lat],dat_dbh_c');
     [~,~,~,vstruct] = variogramfit(v.distance,v.val,[],[],[],'model','stable');
     close;
     [OBSi,OBSVari] = kriging(vstruct,OBS.long',OBS.lat',dat_dbh_c,longi,lati);
     
+    % draw the figure
     figure('Color','w', 'Position',[0 0 1280 720]);
-
-    h=pcolor(longi,lati,OBSi); % * draw the points
+    h=pcolor(longi,lati,OBSi); % draw the points
     hold on
     set(h,'EdgeColor','none'); 
         
-    % draw the stations diffferently depending on MLT
+    % draw the stations
     % draw the stations with MLT == 24
     for i = 1:length(LOC{2,idx})
         if ~isempty(LOC{2,idx}{i})
@@ -177,6 +116,7 @@ for idx = 1:length(datetime_all)
     % draw the map
     mapshow(s,'FaceAlpha', 0);
     xlabel('Longitude'), ylabel('Latitude');
+
     % draw the colorbar
     cbar = colorbar; 
     clim("manual");
@@ -186,22 +126,23 @@ for idx = 1:length(datetime_all)
     cbar.Label.String = "Variation (nT)";
     cbar.Label.FontSize = 12;
 
-
     % draw the title
     title(string(datetime_c, 'yyyy-MM-dd HH:mm:ss'));
-    % draw the axes
-    annotation('textbox',...
-        [0.82 0.066 0.077 0.052],... % * position of the text box
+
+    % configure axes
+    annotation('textbox',...     % draw the axes
+        [0.82 0.066 0.077 0.052],... % position of the text box
         'String',{'nT'},...
         'FontSize',12,...
         'FontName','Arial',...
         'FitBoxToText','off',...
         'LineStyle','none');
-    % set the axes
-    xlim([long_range(1) long_range(2)-1]); % * longitude range
-    ylim([lat_range(1) lat_range(2)-1]); % * latitude range
-    % set the figure position
+    xlim([long_range(1) long_range(2)-1]); % set longitude range
+    ylim([lat_range(1) lat_range(2)-1]); % set latitude range
+
+    % configure fig position
     set(gcf,'position',fig_position);
-    % save the figure
+
+    % save figure
     saveas(gcf,'figures\'+string(datetime_c, 'yyyy-MM-dd HH-mm-ss')+'.png');
 end

@@ -18,6 +18,10 @@ else
     dur = @seconds; % seconds
 end
 
+if isempty(time_range) % if time_range is not specified
+    time_range = [raw.Date_UTC(1) raw.Date_UTC(end)];
+end
+
 % determine the duration of the data
 datetime_range = [datetime(time_range(1), 'Format', 'hh-mm-ss') datetime(time_range(2), 'Format', 'hh-mm-ss')];
 time_duration = dur(duration(datetime_range(2)-datetime_range(1)));
