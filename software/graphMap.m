@@ -1,3 +1,11 @@
+% This script generates a series of figures of the magnetic field variation
+% of the Earth's surface using the data from the SuperMAG observatory
+% network. The figures are generated in the figures folder in the current
+% directory. The figures are generated in the order of the time steps in
+% the downloaded file. The figures are named in the format of
+% "yyyy-MM-dd HH-mm-ss.png" where yyyy-MM-dd is the date and HH-mm-ss is
+% the time of the figure.
+%
 clear
 %===================MUST CONFIGURE===================
 OBSERVATORY_FILE = "data/sample/20231029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag

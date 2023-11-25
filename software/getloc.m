@@ -1,5 +1,24 @@
+% This function takes in the station locations and returns a cell array of
+% structs that contain the station locations for each chunk of magnetic
+% latitude. The cell array is indexed by MLT == 24 and MLT != 24. The
+% structs are indexed by magnetic latitude chunk. The structs contain the
+% station locations for that chunk of magnetic latitude. The structs are
+% indexed by station ID. The structs contain the station ID, latitude, and
+% longitude.
+%
+% INPUTS:
+%   Stations: cell array of station names
+%   chunk_size: size of magnetic latitude chunks
+%   mlt_all: vector of MLT values for each station
+%   maglat_all: vector of magnetic latitudes for each station
+%   lat: vector of latitudes for each station
+%   long: vector of longitudes for each station
+%
+% OUTPUTS:
+%   LOC: cell array of structs containing station locations
+%
 function LOC = getloc(Stations, chunk_size, mlt_all, maglat_all, lat, long)
-for i = 1:length(mlt_all)/length(Stations)
+for i = 1:length(mlt_all)/length(Stations) % loop through each time frame
     % temp storage for MLT != 24
     loc_n = [];
     % temp storage for MLT == 24

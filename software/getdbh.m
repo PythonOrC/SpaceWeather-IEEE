@@ -1,5 +1,16 @@
+% This function extracts the dbh data from the raw data
+% The dbh data is the horizontal component of the magnetic field
+% The dbh data is calculated from the dbn and dbe data using the pythagorean theorem
+% The dbh data is returned as a cell array
+%
+% Input:
+%   raw: the raw data
+%   Stations: the stations to extract the dbh data from
+%
+% Output:
+%   data_dbh: the dbh data
+%
 function data_dbh = getdbh(raw, Stations)
-
 % declare variables
 data_dbe = {};
 data_dbn = {};
@@ -25,6 +36,6 @@ for i = 1:length(Stations)
         end
         datum_dbh(j) = dbh;
     end
-    data_dbh = [data_dbh; datum_dbh'];
+    data_dbh = [data_dbh; datum_dbh']; % add the datum to the data cell array
 end
 end
