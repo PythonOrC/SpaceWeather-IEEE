@@ -13,6 +13,8 @@ OBSERVATORY_FILE = "data/sample/20031029-00-07-supermag.csv";   % path to the ob
 %================OPTIONAL CONGURATION================
 time_range = [];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
                                 % leave empty or undefined to use the time range of the downloaded file
+plot_type = "difference";       % type of plot, "difference" = difference from the previous time step, "absolute" = absolute value
+                                % leave empty or undefined to use the default value of "difference"
 lat_range = [-90 90];           % latitude range of the display area in degrees
 long_range = [-180 180];        % longitude range of the display area in degrees
 fig_position = [10 10 600 400]; % position of the figure window in pixels [left bottom width height]
@@ -48,8 +50,20 @@ for i = 1:length(long)
     end
 end
 
+% determine the plot type
+if ~exist('plot_type', 'var') || isempty(plot_type) 
+    plot_type = "difference";
+end
+
+if plot_type == "difference"
+    calc_dbh = @getdbh_dt;
+elseif plot_type == "absolute"
+    calc_dbh = @getdbh;
+else
+    error("Invalid plot type");
+end
 % calculate change in dbh for each station
-data_dbh = getdbh_dt(raw, Stations);
+data_dbh = calc_dbh(raw, Stations);
 
 % generate the location struct for each time step
 LOC = getloc(Stations, chunk_size, mlt_all, maglat_all, lat, long);
@@ -82,7 +96,7 @@ max_dbh = prctile(dat_dbh, cbar_coverage(2), 'all');
 clearvars -except OBS LOC dat_dbh datetime_all longi lati fig_position s map min_dbh max_dbh long_range lat_range
 
 % graph the data
-for idx = 1:length(datetime_all)
+for idx = 1:length(datetime_all)-1
     datetime_c = datetime_all(idx);% _c = current data for all stations
     fprintf("Generating %s (%d/%d %.2f%% complete)\n", string(datetime_c, 'yyyy-MM-dd HH:mm:ss'), idx, length(datetime_all), idx/length(datetime_all)*100); % status update
     dat_dbh_c = dat_dbh(idx,:); 
