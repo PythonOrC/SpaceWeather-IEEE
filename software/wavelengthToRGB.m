@@ -1,11 +1,12 @@
+% This function converts a given wavelength of light to an
+% approximate RGB color value. The wavelength must be given
+% in nanometers in the range from 380 nm through 750 nm
+%
+% input: wavelength - wavelength in nm
+% output: RGB - color in RGB format
+%
 function RGB = wavelengthToRGB(wavelength)
-    % This function converts a given wavelength of light to an
-    % approximate RGB color value. The wavelength must be given
-    % in nanometers in the range from 380 nm through 750 nm
-    % (789 THz through 400 THz).
-    %
-
-    gamma = 0.80;
+        gamma = 0.80;
 
     if wavelength >= 380 && wavelength < 440
         attenuation = 0.3 + 0.7 * (wavelength - 380) / (440 - 380);

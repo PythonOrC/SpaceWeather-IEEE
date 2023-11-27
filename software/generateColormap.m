@@ -1,3 +1,12 @@
+% a function that generates a colormap based on the min and max values of
+% the data
+% input: lim, a 1x2 array of the min and max values of the data
+% output: cmap_vals, a nx3 array of the rgb values of the colormap
+%         where n is the number of colors in the colormap
+%         green is the middle color, red is the high color, purple is the
+%         low color
+
+
 function cmap_vals = generateColormap(lim)
 cmap_vals = [];
 RED = 630;
