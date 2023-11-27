@@ -11,7 +11,7 @@ clear
 OBSERVATORY_FILE = "data/sample/20031029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
 %====================================================
 %================OPTIONAL CONGURATION================
-time_range = [];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:09:00") [start end]
+time_range = [];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
                                 % leave empty or undefined to use the time range of the downloaded file
 lat_range = [-90 90];           % latitude range of the display area in degrees
 long_range = [-180 180];        % longitude range of the display area in degrees
@@ -84,7 +84,7 @@ clearvars -except OBS LOC dat_dbh datetime_all longi lati fig_position s map min
 % graph the data
 for idx = 1:length(datetime_all)
     datetime_c = datetime_all(idx);% _c = current data for all stations
-    fprintf("Generating %s max: %d min: %d\n", string(datetime_c, 'yyyy-MM-dd HH:mm:ss'), max_dbh, min_dbh); % status update
+    fprintf("Generating %s (%d/%d %.2f%% complete)\n", string(datetime_c, 'yyyy-MM-dd HH:mm:ss'), idx, length(datetime_all), idx/length(datetime_all)*100); % status update
     dat_dbh_c = dat_dbh(idx,:); 
 
     % kriging interpolation
