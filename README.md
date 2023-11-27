@@ -6,12 +6,13 @@ To download the `OBSERVATORY_FILE` data, use the following procedure:
 
 1. Register for an account at [https://supermag.jhuapl.edu/mag/?tab=register](https://supermag.jhuapl.edu/mag/?tab=register)
 2. Go to [https://supermag.jhuapl.edu/mag/?tab=customdownload](https://supermag.jhuapl.edu/mag/?tab=customdownload)
-3. Select the time range on the right side of the page
-4. select the stations to download
-5. Scroll down and choose CSV as the output format
-6. keep all other options as default
-7. Enter Security Code
-8. Click `Download Megnetometer Data`
+3. Select either "High Fidelity" (1 second time resolution) or "Low Fidelity" (1 minute time resolution) data
+4. Select the time range on the right side of the page
+5. select the stations to download
+6. Scroll down and choose CSV as the output format
+7. keep all other options as default
+8. Enter Security Code
+9. Click `Download Megnetometer Data`
 
 ## Running the Code
 

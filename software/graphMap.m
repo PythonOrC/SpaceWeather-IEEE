@@ -11,7 +11,7 @@ clear
 OBSERVATORY_FILE = "data/sample/20031029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
 %====================================================
 %================OPTIONAL CONGURATION================
-time_range = ["2003-10-29T05:09:00" "2003-10-29T09:09:00"];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:09:00") [start end]
+time_range = ["2003-10-29T05:00:00" "2003-10-29T09:00:00"];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:09:00") [start end]
                                 % leave empty or undefined to use the time range of the downloaded file
 lat_range = [-90 90];           % latitude range of the display area in degrees
 long_range = [-180 180];        % longitude range of the display area in degrees
