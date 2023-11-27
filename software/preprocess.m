@@ -71,7 +71,9 @@ for i = 1:height(raw)
 end
 
 % remove the stations with to many missing values
-raw = raw(~ismember(raw.IAGA, bad_stations), :);
+if ~isempty(bad_stations)
+    raw = raw(~ismember(raw.IAGA, bad_stations), :);
+end
 
 % interpolate the missing values for the rest of the stations
 raw.dbn_nez = fillmissing(raw.dbn_nez, 'linear');

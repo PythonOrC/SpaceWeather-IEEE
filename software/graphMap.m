@@ -8,10 +8,10 @@
 %
 clear
 %===================MUST CONFIGURE===================
-OBSERVATORY_FILE = "data/sample/20231029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
+OBSERVATORY_FILE = "data/sample/20031029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
 %====================================================
 %================OPTIONAL CONGURATION================
-time_range = [];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:09:00") [start end]
+time_range = ["2003-10-29T05:09:00" "2003-10-29T09:09:00"];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:09:00") [start end]
                                 % leave empty or undefined to use the time range of the downloaded file
 lat_range = [-90 90];           % latitude range of the display area in degrees
 long_range = [-180 180];        % longitude range of the display area in degrees
@@ -19,7 +19,6 @@ fig_position = [10 10 600 400]; % position of the figure window in pixels [left 
 chunk_size = 10;                % size of the color chunks of magnetic latitude (10 = alternate color every 10 degrees)
 preprocess_threshold = 0.1;     % remove stations with continuous missing data of length greater than this value (0.1 = 10%)
 cbar_coverage = [0.5 99.5];     % colorbar coverage in percentile, [0.5 99.5] means 0.5% to 99.5% percentile, range = [0,100]
-load("colormap.mat");           % load the colormap
 s = shaperead('landareas.shp'); % load the shape file
 %====================================================
 
@@ -49,8 +48,8 @@ for i = 1:length(long)
     end
 end
 
-% calculate dbh for each station
-data_dbh = getdbh(raw, Stations);
+% calculate change in dbh for each station
+data_dbh = getdbh_dt(raw, Stations);
 
 % generate the location struct for each time step
 LOC = getloc(Stations, chunk_size, mlt_all, maglat_all, lat, long);
@@ -80,7 +79,7 @@ max_dbh = prctile(dat_dbh, cbar_coverage(2), 'all');
 [longi,lati] = meshgrid(long_range(1):0.5:long_range(2), lat_range(1):0.5:lat_range(2)); % * 0.5 is the resolution, longitude then latitude
 
 % clear unnecessary variables
-clearvars -except OBS LOC dat_dbh datetime_all longi lati fig_position s map min_dbh max_dbh
+clearvars -except OBS LOC dat_dbh datetime_all longi lati fig_position s map min_dbh max_dbh long_range lat_range
 
 % graph the data
 for idx = 1:length(datetime_all)
@@ -100,7 +99,6 @@ for idx = 1:length(datetime_all)
     hold on
     set(h,'EdgeColor','none'); 
         
-    % draw the stations
     % draw the stations with MLT == 24
     for i = 1:length(LOC{2,idx})
         if ~isempty(LOC{2,idx}{i})
@@ -129,7 +127,7 @@ for idx = 1:length(datetime_all)
     cbar = colorbar; 
     clim("manual");
     clim([min_dbh max_dbh]); % * colorbar range
-    colormap(map);
+    colormap(generateColormap([min_dbh max_dbh]));
     set(gca,'ColorScale','linear')
     cbar.Label.String = "Variation (nT)";
     cbar.Label.FontSize = 12;
