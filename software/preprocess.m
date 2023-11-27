@@ -11,19 +11,29 @@ function new_file_name = preprocess(file_name, time_range, threshold)
 raw = readtable(file_name, "Delimiter",",", "DatetimeType","datetime");
 stations_length = length(unique(raw.IAGA));
 
-% determine the time resolution (minutes or seconds)
-if raw.Extent == 60
-    dur = @minutes; % minutes
-else
-    dur = @seconds; % seconds
-end
-
 if isempty(time_range) % if time_range is not specified
     time_range = [raw.Date_UTC(1) raw.Date_UTC(end)];
 end
 
 % determine the duration of the data
 datetime_range = [datetime(time_range(1), 'Format', 'hh-mm-ss') datetime(time_range(2), 'Format', 'hh-mm-ss')];
+% check if output file already exists
+% generate output file name with the start time and duration
+file = split(string(file_name), ".");
+new_file_name = file(1) + " preprocessed (start " + string(datetime_range(1)) + " end " + string(datetime_range(2))+")."+file(2);
+if isfile(new_file_name)
+    % if it does return the file name
+    disp("File already exists, preprocessing not needed");
+    return
+end
+
+% determine the time resolution (minutes or seconds)
+if raw.Extent == 60
+    dur = @minutes; % minutes
+else
+    dur = @seconds; % seconds
+end
+% determine the time duration
 time_duration = dur(duration(datetime_range(2)-datetime_range(1)));
 % determine start & end index of the time range
 start_idx = find(raw.Date_UTC == datetime(time_range(1)),1);
@@ -79,8 +89,6 @@ end
 raw.dbn_nez = fillmissing(raw.dbn_nez, 'linear');
 raw.dbe_nez = fillmissing(raw.dbe_nez, 'linear');
 
-file = split(string(file_name), ".");
-% save the data to a new csv file including the start time and duration
-new_file_name = file(1) + " preprocessed (start " + string(datetime_range(1)) + " end " + string(datetime_range(2))+")."+file(2);
+% save the data
 writetable(raw, new_file_name, "Delimiter",",");
 end
