@@ -21,14 +21,24 @@ fig_position = [10 10 600 400]; % position of the figure window in pixels [left 
 chunk_size = 10;                % size of the color chunks of magnetic latitude (10 = alternate color every 10 degrees)
 preprocess_threshold = 0.1;     % remove stations with continuous missing data of length greater than this value (0.1 = 10%)
 cbar_coverage = [0.5 99.5];     % colorbar coverage in percentile, [0.5 99.5] means 0.5% to 99.5% percentile, range = [0,100]
-s = shaperead('landareas.shp'); % load the shape file
+SHAPE_FILE = 'landareas.shp';   % load the shape file for the map
 %====================================================
 
+% check if the files exists
+if ~isfile(OBSERVATORY_FILE)
+    error("OBSERVATORY_FILE does not exist");
+end
+if ~isfile(SHAPE_FILE)
+    error("SHAPE_FILE does not exist");
+end
 
 % declare time_range if not defined already
 if ~exist('time_range', 'var') || isempty(time_range) 
     time_range = [];
 end
+
+% load the shape file
+s = shaperead(SHAPE_FILE);
 
 % preprocess the downloaded csv to remove stations that are too unreliable
 clc
