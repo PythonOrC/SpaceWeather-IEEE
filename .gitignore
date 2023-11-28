@@ -3,3 +3,4 @@ software/figures
 software/animation
 *.asv
 test.m
+__pycache__
