@@ -11,7 +11,7 @@ clear
 OBSERVATORY_FILE = "data/sample/20031029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
 %====================================================
 %================OPTIONAL CONGURATION================
-time_range = ["2003-10-29T05:00:00" "2003-10-29T09:00:00"];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
+time_range = [];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
                                 % leave empty or undefined to use the time range of the downloaded file
 plot_type = "";                 % type of plot, "difference" = difference from the previous time step i.e. time derivative of dbh, "absolute" = absolute value
                                 % leave empty or undefined to use the default value of "absolute"
