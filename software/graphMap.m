@@ -11,9 +11,9 @@ clear
 OBSERVATORY_FILE = "data/sample/20031029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
 %====================================================
 %================OPTIONAL CONGURATION================
-time_range = [];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
+time_range = ["2003-10-29T05:00:00" "2003-10-29T09:00:00"];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
                                 % leave empty or undefined to use the time range of the downloaded file
-plot_type = "absolute";         % type of plot, "difference" = difference from the previous time step i.e. time derivative of dbh, "absolute" = absolute value
+plot_type = "";                 % type of plot, "difference" = difference from the previous time step i.e. time derivative of dbh, "absolute" = absolute value
                                 % leave empty or undefined to use the default value of "absolute"
 lat_range = [-90 90];           % latitude range of the display area in degrees
 long_range = [-180 180];        % longitude range of the display area in degrees
@@ -21,7 +21,7 @@ fig_position = [10 10 600 400]; % position of the figure window in pixels [left 
 chunk_size = 10;                % size of the color chunks of magnetic latitude (10 = alternate color every 10 degrees)
 preprocess_threshold = 0.1;     % remove stations with continuous missing data of length greater than this value (0.1 = 10%)
 cbar_coverage = [0.5 99.5];     % colorbar coverage in percentile, [0.5 99.5] means 0.5% to 99.5% percentile, range = [0,100]
-SHAPE_FILE = 'landareas.shp';   % load the shape file for the map
+SHAPE_FILE = 'data/landareas.shp';   % load the shape file for the map
 %====================================================
 
 % check if the files exists
@@ -33,7 +33,7 @@ if ~isfile(SHAPE_FILE)
 end
 
 % declare time_range if not defined already
-if ~exist('time_range', 'var') || isempty(time_range) 
+if ~exist('time_range', 'var') || isempty(time_range)
     time_range = [];
 end
 
@@ -61,7 +61,7 @@ for i = 1:length(long)
 end
 
 % determine the plot type
-if ~exist('plot_type', 'var') || isempty(plot_type) 
+if ~exist('plot_type', 'var') || isempty(plot_type) || length(plot_type) == 1
     plot_type = "absolute";
 end
 
