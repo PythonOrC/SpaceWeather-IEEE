@@ -3,27 +3,56 @@
 % remove the stations with too many missing values
 % interpolates the missing values
 % and saves the data to a new csv file
-% 
-% preprocess("20231029-00-07-supermag.csv",309,240)
-% 
-function new_file_name = preprocess(file_name, start_time, duration)
-
+%
+% example:
+% preprocess("20231029-00-07-supermag.csv",["2003-10-29T05:09:00" "2003-10-29T09:09:00"], 0.1)
+%
+function new_file_name = preprocess(file_name, time_range, threshold)
 raw = readtable(file_name, "Delimiter",",", "DatetimeType","datetime");
 stations_length = length(unique(raw.IAGA));
-%extract data from table within the time range
-% take the start_timeth row and the next duration rows
 
-raw = raw(start_time*stations_length+1:(start_time+duration+1)*stations_length, :);
+if isempty(time_range) % if time_range is not specified
+    time_range = [raw.Date_UTC(1) raw.Date_UTC(end)];
+end
 
-%remove the stations with 20 or more consecutive missing values in the dbn and dbe columns
+% determine the duration of the data
+datetime_range = [datetime(time_range(1), 'Format', 'hh-mm-ss') datetime(time_range(2), 'Format', 'hh-mm-ss')];
+% check if output file already exists
+% generate output file name with the start time and duration
+file = split(string(file_name), ".");
+new_file_name = file(1) + " preprocessed (start " + string(datetime_range(1)) + " end " + string(datetime_range(2))+")."+file(2);
+if isfile(new_file_name)
+    % if it does return the file name
+    disp("File already exists, preprocessing not needed");
+    return
+end
+
+% determine the time resolution (minutes or seconds)
+if raw.Extent == 60
+    dur = @minutes; % minutes
+else
+    dur = @seconds; % seconds
+end
+% determine the time duration
+time_duration = dur(duration(datetime_range(2)-datetime_range(1)));
+% determine start & end index of the time range
+start_idx = find(raw.Date_UTC == datetime(time_range(1)),1);
+end_idx = find(raw.Date_UTC == datetime(time_range(2)),1, "last");
+
+% extract data from table within the time range
+% take rows from start_idx to end_idx
+raw = raw(start_idx:end_idx, :);
+
+%remove the stations with `threshold` percent or more consecutive missing values in the dbn and dbe columns
 % create a 3xn table that correlates missing dbn values and dbe to the station name
 misses = table('Size',[0 3],'VariableTypes', ["string","double", "double"],'VariableNames', ["IAGA", "dbn", "dbe"]);
 bad_stations = [];
 for i = 1:height(raw)
+    % check for continuous missing dbn values
     if isnan(raw.dbn_nez(i))
         if ismember(raw.IAGA{i}, misses.IAGA)
             misses.dbn(misses.IAGA == raw.IAGA{i}) = misses.dbn(misses.IAGA == raw.IAGA{i}) + 1;
-            if misses.dbe(misses.IAGA == raw.IAGA{i}) >= 20 && ~any(strcmp(bad_stations,raw.IAGA{i}))
+            if misses.dbe(misses.IAGA == raw.IAGA{i}) >= threshold*time_duration && ~any(strcmp(bad_stations,raw.IAGA{i}))
                 bad_stations = [bad_stations; raw.IAGA(i)];
             end
         else
@@ -34,11 +63,11 @@ for i = 1:height(raw)
             misses.dbn(misses.IAGA == raw.IAGA{i}) = 0;
         end
     end
-
+    % check for continuous missing dbe values
     if isnan(raw.dbe_nez(i))
         if ismember(raw.IAGA{i}, misses.IAGA)
             misses.dbe(misses.IAGA == raw.IAGA{i}) = misses.dbe(misses.IAGA == raw.IAGA{i}) + 1;
-            if misses.dbe(misses.IAGA == raw.IAGA{i}) >= 20 && ~any(strcmp(bad_stations, raw.IAGA{i}))
+            if misses.dbe(misses.IAGA == raw.IAGA{i}) >= threshold*time_duration && ~any(strcmp(bad_stations, raw.IAGA{i}))
                 bad_stations = [bad_stations; raw.IAGA(i)];
             end
         else
@@ -51,15 +80,15 @@ for i = 1:height(raw)
     end
 end
 
-% remove the stations with 
-raw = raw(~ismember(raw.IAGA, bad_stations), :);
+% remove the stations with to many missing values
+if ~isempty(bad_stations)
+    raw = raw(~ismember(raw.IAGA, bad_stations), :);
+end
 
-% interpolate the missing values
+% interpolate the missing values for the rest of the stations
 raw.dbn_nez = fillmissing(raw.dbn_nez, 'linear');
 raw.dbe_nez = fillmissing(raw.dbe_nez, 'linear');
 
-file = split(string(file_name), ".");
-% save the data to a new csv file including the start time and duration
-new_file_name = "preprocessed " + file(1) + " (start " + start_time + ", duration " + duration + ")."+file(2);
+% save the data
 writetable(raw, new_file_name, "Delimiter",",");
 end

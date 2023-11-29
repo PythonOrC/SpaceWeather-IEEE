@@ -1,3 +1,7 @@
 .deprecated
 software/figures
 software/animation
+*.asv
+test.m
+__pycache__
+animation.gif

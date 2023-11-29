@@ -9,7 +9,7 @@ def make_gif(frame_folder):
         Image.open(image) for image in glob.glob(f"{file_path}/{frame_folder}/*.png")
     ]
     frames[0].save(
-        f"{frame_folder}.gif",
+        f"{file_path}/{frame_folder}.gif",
         format="GIF",
         append_images=frames[1:],
         save_all=True,
