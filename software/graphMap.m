@@ -15,6 +15,7 @@ time_range = [];                % override time range of the generation in ISO 8
                                 % leave empty or undefined to use the time range of the downloaded file
 plot_type = "";                 % type of plot, "difference" = difference from the previous time step i.e. time derivative of dbh, "absolute" = absolute value
                                 % leave empty or undefined to use the default value of "absolute"
+                                % it is important to be aware that the difference plot type requires an additional time step to calculate the derivative (i.e. the last time step will be skipped)
 lat_range = [-90 90];           % latitude range of the display area in degrees
 long_range = [-180 180];        % longitude range of the display area in degrees
 fig_position = [10 10 600 400]; % position of the figure window in pixels [left bottom width height]
