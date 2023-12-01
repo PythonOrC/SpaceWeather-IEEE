@@ -7,7 +7,7 @@
 %         low color
 
 
-function cmap_vals = generateColormap(lim)
+function cmap_vals = generateColormap(lim, cmap_distribution)
 cmap_vals = [];
 RED = 630;
 PURPLE = 410;
@@ -19,8 +19,8 @@ if lim(1) < 0 && lim(2) >= 0
     % generate two halfmaps
     posmap_res = resolution * lim(2) / (lim(2) - lim(1));
     negmap_res = resolution * lim(1) / (lim(1) - lim(2));
-    posmap = generateHalfColormap([PURPLE, RED], [MID, RED], posmap_res);
-    negmap = generateHalfColormap([PURPLE, RED], [PURPLE, MID], negmap_res);
+    posmap = generateHalfColormap([PURPLE, RED], [MID, RED], posmap_res, cmap_distribution);
+    negmap = generateHalfColormap([PURPLE, RED], [PURPLE, MID], negmap_res, cmap_distribution);
     % combine them
     cmap_vals = [negmap; posmap];
 
@@ -28,20 +28,20 @@ if lim(1) < 0 && lim(2) >= 0
 elseif lim(1) < lim(2) && lim(2) <= 0
     % generate one halfmap
     negmap_res = resolution;
-    negmap = generateHalfColormap([PURPLE, RED], [PURPLE, RED], negmap_res);
+    negmap = generateHalfColormap([PURPLE, RED], [PURPLE, RED], negmap_res, cmap_distribution);
     cmap_vals = negmap;
 
 % case 3: 0 <= min < max
 elseif 0 <= lim(1) && lim(1) < lim(2)
     % generate one halfmap
     posmap_res = resolution;
-    posmap = generateHalfColormap([PURPLE, RED], [MID, RED], posmap_res);
+    posmap = generateHalfColormap([PURPLE, RED], [MID, RED], posmap_res, cmap_distribution);
     cmap_vals = posmap;
 end
 end
 
-function halfmap_vals = generateHalfColormap(freq_range, val_range, half_res)
-    distribution = -0.08;
+function halfmap_vals = generateHalfColormap(freq_range, val_range, half_res, cmap_dist)
+    distribution = -1 * cmap_dist;
     halfmap_vals = [];
     x = val_range(1);
     while x < val_range(2)

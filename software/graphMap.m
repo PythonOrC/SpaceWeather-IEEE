@@ -11,18 +11,20 @@ clear
 OBSERVATORY_FILE = "data/sample/20031029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
 %====================================================
 %================OPTIONAL CONGURATION================
-time_range = [];                % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
-                                % leave empty or undefined to use the time range of the downloaded file
-plot_type = "";                 % type of plot, "difference" = difference from the previous time step i.e. time derivative of dbh, "absolute" = absolute value
-                                % leave empty or undefined to use the default value of "absolute"
-                                % it is important to be aware that the difference plot type requires an additional time step to calculate the derivative (i.e. the last time step will be skipped)
-lat_range = [-90 90];           % latitude range of the display area in degrees
-long_range = [-180 180];        % longitude range of the display area in degrees
-fig_position = [10 10 600 400]; % position of the figure window in pixels [left bottom width height]
-chunk_size = 10;                % size of the color chunks of magnetic latitude (10 = alternate color every 10 degrees)
-preprocess_threshold = 0.1;     % remove stations with continuous missing data of length greater than this value (0.1 = 10%)
-cbar_coverage = [0.5 99.5];     % colorbar coverage in percentile, [0.5 99.5] means 0.5% to 99.5% percentile, range = [0,100]
-SHAPE_FILE = 'data/landareas.shp';   % load the shape file for the map
+time_range = [];                    % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
+                                    % leave empty or undefined to use the time range of the downloaded file
+plot_type = "";                     % type of plot, "difference" = difference from the previous time step i.e. time derivative of dbh, "absolute" = absolute value
+                                    % leave empty or undefined to use the default value of "absolute"
+                                    % it is important to be aware that the difference plot type requires an additional time step to calculate the derivative (i.e. the last time step will be skipped)
+lat_range = [-90 90];               % latitude range of the display area in degrees
+long_range = [-180 180];            % longitude range of the display area in degrees
+fig_position = [10 10 600 400];     % position of the figure window in pixels [left bottom width height]
+chunk_size = 10;                    % size of the color chunks of magnetic latitude (10 = alternate color every 10 degrees)
+preprocess_threshold = 0.1;         % remove stations with continuous missing data of length greater than this value (0.1 = 10%)
+cbar_coverage = [0.5 99.5];         % colorbar coverage in percentile, [0.5 99.5] means 0.5% to 99.5% percentile, range = [0,100]
+SHAPE_FILE = 'data/landareas.shp';  % load the shape file for the map
+colormap_distribution = 0.04;       % abstract value that determines the distribution of the colormap, higher value = more colors in the lower range, lower value = more colors in the higher range
+                                    % recommended range = [0.01, 0.1]
 %====================================================
 
 % check if the files exists
@@ -62,7 +64,7 @@ for i = 1:length(long)
 end
 
 % determine the plot type
-if ~exist('plot_type', 'var') || isempty(plot_type) || length(plot_type) == 1
+if ~exist('plot_type', 'var') || isempty(plot_type) || length(char(plot_type)) == 0
     plot_type = "absolute";
 end
 
@@ -104,12 +106,12 @@ max_dbh = prctile(dat_dbh, cbar_coverage(2), 'all');
 [longi,lati] = meshgrid(long_range(1):0.5:long_range(2), lat_range(1):0.5:lat_range(2)); % * 0.5 is the resolution, longitude then latitude
 
 % clear unnecessary variables
-clearvars -except OBS LOC dat_dbh datetime_all longi lati fig_position s map min_dbh max_dbh long_range lat_range
+clearvars -except OBS LOC dat_dbh datetime_all longi lati fig_position s map min_dbh max_dbh long_range lat_range colormap_distribution
 
 % graph the data
-for idx = 1:length(datetime_all)-1
+for idx = 1:length(dat_dbh)
     datetime_c = datetime_all(idx);% _c = current data for all stations
-    fprintf("Generating %s (%d/%d %.2f%% complete)\n", string(datetime_c, 'yyyy-MM-dd HH:mm:ss'), idx, length(datetime_all), idx/length(datetime_all)*100); % status update
+    fprintf("Generating %s (%d/%d %.2f%% complete)\n", string(datetime_c, 'yyyy-MM-dd HH:mm:ss'), idx, length(dat_dbh), idx/length(dat_dbh)*100); % status update
     dat_dbh_c = dat_dbh(idx,:); 
 
     % kriging interpolation
@@ -152,7 +154,7 @@ for idx = 1:length(datetime_all)-1
     cbar = colorbar; 
     clim("manual");
     clim([min_dbh max_dbh]); % * colorbar range
-    colormap(generateColormap([min_dbh max_dbh]));
+    colormap(generateColormap([min_dbh max_dbh], colormap_distribution));
     set(gca,'ColorScale','linear')
     cbar.Label.String = "Variation (nT)";
     cbar.Label.FontSize = 12;
