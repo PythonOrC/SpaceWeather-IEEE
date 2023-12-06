@@ -11,7 +11,7 @@ clear
 OBSERVATORY_FILE = "data/sample/20031029-00-07-supermag.csv";   % path to the observatory file downloaded from supermag
 %====================================================
 %================OPTIONAL CONGURATION================
-time_range = [];                    % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
+time_range = ["2003-10-29T05:00:00" "2003-10-29T05:00:00"];                    % override time range of the generation in ISO 8601 format ("YYYY-MM-DDThh:mm:ss" e.g."2003-10-29T05:00:00") [start end]
                                     % leave empty or undefined to use the time range of the downloaded file
 plot_type = "";                     % type of plot, "difference" = difference from the previous time step i.e. time derivative of dbh, "absolute" = absolute value
                                     % leave empty or undefined to use the default value of "absolute"
@@ -107,6 +107,9 @@ max_dbh = prctile(dat_dbh, cbar_coverage(2), 'all');
 
 % clear unnecessary variables
 clearvars -except OBS LOC dat_dbh datetime_all longi lati fig_position s map min_dbh max_dbh long_range lat_range colormap_distribution
+
+%create folder for figures
+mkdir('figures');
 
 % graph the data
 for idx = 1:length(dat_dbh)
